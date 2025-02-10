@@ -1,0 +1,9 @@
+Create mocABI.json and swapABI.json from your compiled contracts
+
+Set up Hardhat configuration for deployment
+
+Add environment variables for contract addresses
+
+Implement user connection tracking (you'll need a database)
+
+Add transaction history tracking
