@@ -1,0 +1,92 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+// MOC Token Contract
+contract MOC {
+    string public name = "MonadConnect Token";
+    string public symbol = "MOC";
+    uint8 public decimals = 18;
+    uint256 public totalSupply;
+    address public owner;
+
+    mapping(address => uint256) private _balances;
+    mapping(address => mapping(address => uint256)) private _allowances;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    constructor() {
+        owner = msg.sender;
+        _mint(msg.sender, 1000000 * 10**decimals);
+    }
+
+    function balanceOf(address account) public view returns (uint256) {
+        return _balances[account];
+    }
+
+    function transfer(address recipient, uint256 amount) public returns (bool) {
+        _transfer(msg.sender, recipient, amount);
+        return true;
+    }
+
+    function _transfer(address sender, address recipient, uint256 amount) internal {
+        require(sender != address(0), "ERC20: transfer from the zero address");
+        require(recipient != address(0), "ERC20: transfer to the zero address");
+        
+        _balances[sender] -= amount;
+        _balances[recipient] += amount;
+        emit Transfer(sender, recipient, amount);
+    }
+
+    function _mint(address account, uint256 amount) internal {
+        totalSupply += amount;
+        _balances[account] += amount;
+        emit Transfer(address(0), account, amount);
+    }
+
+    // Faucet function for testnet
+    function claimMOC() public {
+        require(totalSupply + 100 * 10**decimals <= 100000000 * 10**decimals, "Max supply reached");
+        _mint(msg.sender, 100 * 10**decimals);
+    }
+}
+
+// Swap Contract
+contract MonadSwap {
+    address public owner;
+    MOC public moc;
+
+    struct Token {
+        address tokenAddress;
+        uint256 rate; // Rate compared to MOC (1 MOC = X Token)
+    }
+
+    mapping(string => Token) public supportedTokens;
+
+    constructor(address _mocAddress) {
+        owner = msg.sender;
+        moc = MOC(_mocAddress);
+    }
+
+    function addToken(string memory chain, address tokenAddress, uint256 rate) public {
+        require(msg.sender == owner, "Only owner");
+        supportedTokens[chain] = Token(tokenAddress, rate);
+    }
+
+    function swapMOCToToken(string memory chain, uint256 amount) public {
+        Token memory token = supportedTokens[chain];
+        require(token.tokenAddress != address(0), "Token not supported");
+        
+        moc.transferFrom(msg.sender, address(this), amount);
+        // Implement actual swap logic with cross-chain compatibility here
+        // This would require bridge integration in real implementation
+    }
+
+    function swapTokenToMOC(string memory chain, uint256 amount) public {
+        Token memory token = supportedTokens[chain];
+        require(token.tokenAddress != address(0), "Token not supported");
+        
+        // Implement token transfer and MOC minting
+        // This would require bridge integration in real implementation
+    }
+}
