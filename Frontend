@@ -1,0 +1,79 @@
+import { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
+
+export default function Home() {
+  const [provider, setProvider] = useState(null);
+  const [account, setAccount] = useState('');
+  const [mocBalance, setMocBalance] = useState(0);
+  const [swapAmount, setSwapAmount] = useState(0);
+  const [selectedChain, setSelectedChain] = useState('polygon');
+
+  const MOC_ADDRESS = "0x..."; // Your contract address
+  const SWAP_ADDRESS = "0x..."; // Swap contract address
+
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = provider.getSigner();
+      setProvider(provider);
+      setAccount(await signer.getAddress());
+    }
+  };
+
+  const claimMOC = async () => {
+    const contract = new ethers.Contract(MOC_ADDRESS, mocABI, provider.getSigner());
+    await contract.claimMOC();
+  };
+
+  const handleSwap = async (isBuyingMOC) => {
+    const swapContract = new ethers.Contract(SWAP_ADDRESS, swapABI, provider.getSigner());
+    if (isBuyingMOC) {
+      await swapContract.swapTokenToMOC(selectedChain, ethers.utils.parseEther(swapAmount));
+    } else {
+      await swapContract.swapMOCToToken(selectedChain, ethers.utils.parseEther(swapAmount));
+    }
+  };
+
+  return (
+    <div>
+      <header>
+        {!account ? (
+          <button onClick={connectWallet}>Connect Wallet</button>
+        ) : (
+          <p>Connected: {account}</p>
+        )}
+      </header>
+
+      <main>
+        <section>
+          <h2>Your MOC Balance: {mocBalance}</h2>
+          <button onClick={claimMOC}>Claim Free MOC</button>
+        </section>
+
+        <section>
+          <h3>Swap Tokens</h3>
+          <select onChange={(e) => setSelectedChain(e.target.value)}>
+            <option value="polygon">Polygon</option>
+            <option value="bsc">BSC</option>
+            <option value="base">Base</option>
+            <option value="sepolia">Sepolia</option>
+            <option value="arbitrum">Arbitrum</option>
+            <option value="optimism">Optimism</option>
+          </select>
+
+          <input
+            type="number"
+            value={swapAmount}
+            onChange={(e) => setSwapAmount(e.target.value)}
+          />
+
+          <div>
+            <button onClick={() => handleSwap(false)}>Swap MOC to Token</button>
+            <button onClick={() => handleSwap(true)}>Swap Token to MOC</button>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
